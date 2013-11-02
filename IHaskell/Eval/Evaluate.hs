@@ -155,12 +155,17 @@ parseCommands code = concatMap makeCommands pieces
         _ -> Import $ strip line
 
 evalCommand :: Command -> Interpreter [DisplayData]
-evalCommand (Import importStr) = do
+evalCommand (Import importStr) = ghandle handler $ do
   write $ "Import: " ++ importStr
   importDecl <- parseImportDecl importStr
   context <- getContext
   setContext $ IIDecl importDecl : context
   return []
+  where
+    handler :: SomeException -> Interpreter [DisplayData]
+    handler exception = do
+      write $ concat ["BreakImp: ", show exception, "\nfrom import declaration:\n", importStr]
+      return [Display MimeHtml $ makeError $ show exception]
 
 evalCommand (Directive directive) = do
   write $ "Directive: " ++ directive
