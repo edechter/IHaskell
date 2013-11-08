@@ -8,9 +8,12 @@ module IHaskell.Message.Writer (
 
 import Prelude (read)
 import ClassyPrelude
-import Data.Aeson
+import Data.Aeson 
+
+import Data.ByteString (append)
 
 import IHaskell.Types
+
 
 -- ghc (api) version number like ints [7,6,2]. Could be done at compile
 -- time, but for now there's no template haskell in IHaskell
@@ -27,10 +30,10 @@ instance ToJSON Message where
                              "language" .= string "haskell"
                            ]
 
-  toJSON ExecuteReply{ status = status, executionCounter = counter} = object [
+  toJSON ExecuteReply{ status = status, executionCounter = counter, payload = payloads} = object [
                              "status" .= show status,
                              "execution_count" .= counter,
-                             "payload" .= emptyList,
+                             "payload" .= map payloadDataToJson payloads,
                              "user_variables" .= emptyMap,
                              "user_expressions" .= emptyMap
                            ]
@@ -63,7 +66,7 @@ instance ToJSON Message where
                              "status" .= if s then "ok" :: String else "error"
                            ]
   toJSON o@ObjectInfoReply{} = object [
-                            "oname" .= objectName o,
+                            "name" .= objectName o,
                             "found" .= objectFound o,
                             "ismagic" .= False,
                             "isalias" .= False,
@@ -85,9 +88,15 @@ instance ToJSON StreamType where
     toJSON Stdin = String "stdin"
     toJSON Stdout = String "stdout"
 
+instance ToJSON PayloadSource where
+  toJSON Pager = String "page"
+
 -- | Convert a MIME type and value into a JSON dictionary pair.
 displayDataToJson :: DisplayData -> (Text, Value) 
 displayDataToJson (Display mimeType dataStr) = pack (show mimeType) .= dataStr
+
+payloadDataToJson :: PayloadData -> Value
+payloadDataToJson (PayloadData src dta) = object ["source" .= src, "text" .= toJSON dta]
 
 ----- Constants -----
 

@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ExistentialQuantification #-}
 -- | Description : All message type definitions.
 module IHaskell.Types (
   Profile (..),
@@ -14,6 +15,8 @@ module IHaskell.Types (
   StreamType(..),
   MimeType(..),
   DisplayData(..),
+  PayloadData(..),
+  PayloadSource(..),
   ExecuteReplyStatus(..),
   ) where
 
@@ -159,6 +162,7 @@ data Message
   | ExecuteReply {
       header :: MessageHeader,
       status :: ExecuteReplyStatus,         -- ^ The status of the output.
+      payload :: [PayloadData],              -- ^ The payload for extra information.
       executionCounter :: Int               -- ^ The execution count, i.e. which output this is.
     }
 
@@ -227,7 +231,7 @@ data Message
 'status' : 'ok'
 } -}
   | ObjectInfoRequest {
-      header :: MessageHeader, 
+      header :: MessageHeader,
       objectName :: ByteString, -- ^ name of object to be searched for
       detailLevel :: Int       -- ^ level of detail desired. default (0) 
                                 --  is equivalent to typing foo?, (1) is foo?? (don't know yet what this means for haskell)
@@ -262,6 +266,20 @@ data MimeType = PlainText | MimeHtml deriving Eq
 instance Show MimeType where
   show PlainText = "text/plain"
   show MimeHtml  = "text/html"
+
+-- | Payload dict. Used to send data to e.g. the pager in the notebook. The payloadData
+-- | type must implement a ToJSON instance.
+data PayloadData = forall a. ToJSON a => PayloadData {payloadSource :: PayloadSource, payloadData :: a }
+
+instance Show PayloadData where
+  show (PayloadData src dta) = "Source: " ++ show src ++ ", " ++ (show . toJSON $ dta)
+
+-- | The types of sources for the payload. Currently only "pager is a source."
+data PayloadSource = Pager
+
+instance Show PayloadSource where
+  show Pager = "pager"
+
 
 -- | Input and output streams.
 data StreamType = Stdin | Stdout deriving Show

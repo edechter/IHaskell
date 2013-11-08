@@ -134,7 +134,7 @@ replyTo interface ExecuteRequest{ getCode = code } replyHeader state = do
   send $ PublishStatus busyHeader Busy
 
   -- Get display data outputs of evaluating the code.
-  outputs <- evaluate $ Chars.unpack code
+  (outputs, payloads) <- evaluate $ Chars.unpack code
 
   -- Find all the plain text outputs.
   -- Send plain text output via an output message, because we are just
@@ -159,6 +159,7 @@ replyTo interface ExecuteRequest{ getCode = code } replyHeader state = do
   return (newState, ExecuteReply {
     header = replyHeader,
     executionCounter = execCount,
+    payload = payloads,
     status = Ok
   })
 
