@@ -546,7 +546,10 @@ parseShellTests =
     test ":!l ~/Downloads/MyFile\\ Has\\ Spaces.txt" 
                   [":!l", "~/Downloads/MyFile\\ Has\\ Spaces.txt"]
     test ":!l \"~/Downloads/MyFile Has Spaces.txt\" /Another/File\\ WithSpaces.doc" 
-                  [":!l", "~/Downloads/MyFile Has Spaces.txt", "/Another/File\\ WithSpaces.doc" ]
+                  [":!l", "\"~/Downloads/MyFile Has Spaces.txt\"", "/Another/File\\ WithSpaces.doc" ]
+    test "abc \"de" ["abc", "\"de"]
+    test "import \"~/Downloads/MyFile Has Spaces.txt\" \"/Another/File WithSpaces.doc" 
+              ["import", "\"~/Downloads/MyFile Has Spaces.txt\"", "\"/Another/File WithSpaces.doc" ]
   where
     test string expected = 
       it ("parses " ++ string ++ " correctly") $
